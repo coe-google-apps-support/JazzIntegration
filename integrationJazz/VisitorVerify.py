@@ -68,11 +68,15 @@ class VerificationHandler(APIView):
                 responseJSON = json.loads(response.content.decode('utf8').replace("'", '"'))
                 oauth2_name = responseJSON['name']
                 oauth2_email = responseJSON['email']
-                oauth2_domain = responseJSON['hd']
-                if oauth2_domain == "edmonton.ca":
-                    isCOEUser = True
-                else:
+                try:
+                    oauth2_domain = responseJSON['hd']
+                    if oauth2_domain == "edmonton.ca":
+                            isCOEUser = True
+                    else:
+                        isCOEUser = False
+                except:
                     isCOEUser = False
+                    
                 livechat_visitor_details_url = "https://api.livechatinc.com/v2/visitors/%s/details"%visitor_id
                 if oauth2_name == visitor_name and oauth2_email == visitor_email and isCOEUser:
                     payload = {'license_id':licence_number,'token':webhook_token, 'id':'Status', 'fields[0][name]':'Name', 'fields[0][value]':oauth2_name, 'fields[1][name]':'Email', 'fields[1][value]':oauth2_email, 'fields[2][name]':'Verified COE User', 'fields[2][value]':'✅'}
