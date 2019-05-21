@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'integrationJazz',
+    'social_django',
 ]
 
 MIDDLEWARE = [
