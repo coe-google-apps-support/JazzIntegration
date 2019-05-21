@@ -55,7 +55,6 @@ class VerificationHandler(APIView):
             webhook_token = request.data["token"]
             licence_number = request.data["license_id"]
             google_oauth2_url = "https://www.googleapis.com/oauth2/v3/userinfo?access_token="
-            google_oauth2_idToken_url = "https://oauth2.googleapis.com/tokeninfo?id_token="
             try:
                 visitor_auth_token = request.data["visitor"]["page_current"].split("token=")[1]
             except:
@@ -64,13 +63,7 @@ class VerificationHandler(APIView):
                 updated_details = requests.post(livechat_visitor_details_url, auth=HTTPBasicAuth(config('livechat_email'),config('livechat_api_key')), data=payload)
                 return Response("User not verified", status=200)
 
-            access_token_response = requests.get(google_oauth2_url+visitor_auth_token)
-            id_token_response = requests.get(google_oauth2_idToken_url+visitor_auth_token)
-            if id_token_response.status_code == 200:
-                response = id_token_response
-            else:
-                response = access_token_response
-
+            response = requests.get(google_oauth2_url+visitor_auth_token)
             if response.status_code==200:
                 responseJSON = json.loads(response.content.decode('utf8').replace("'", '"'))
                 oauth2_name = responseJSON['name']
