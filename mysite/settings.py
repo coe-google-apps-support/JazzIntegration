@@ -40,9 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'integrationJazz',
-    'social_django',
-]
+    'integrationJazz'
+    ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
