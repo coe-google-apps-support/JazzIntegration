@@ -56,7 +56,10 @@ class VerificationHandler(APIView):
             licence_number = request.data["license_id"]
             google_oauth2_url = "https://www.googleapis.com/oauth2/v3/userinfo?access_token="
             try:
-                visitor_auth_token = request.data["visitor"]["page_current"].split("token=")[1]
+                if "token=" in request.data["visitor"]["page_current"]:
+                    visitor_auth_token = request.data["visitor"]["page_current"].split("token=")[1]
+                elif "token%3D" in request.data["visitor"]["page_current"]:
+                    visitor_auth_token = request.data["visitor"]["page_current"].split("token%3D")[1]
             except:
                 livechat_visitor_details_url = "https://api.livechatinc.com/v2/visitors/%s/details"%visitor_id
                 payload = {'license_id':licence_number,'token':webhook_token, 'id':'Status', 'fields[0][name]':'Verified COE User', 'fields[0][value]':'❌'}
