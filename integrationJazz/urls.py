@@ -19,5 +19,6 @@ from django.urls import path, include
 from . import VisitorVerify
 
 urlpatterns = [
-    path('verify/', VisitorVerify.VerificationHandler.as_view(), name='verify_visitor')
+    path('verify/', VisitorVerify.VerificationHandler.as_view(), name='verify_visitor'),
+    path('', VisitorVerify.MainPage, name='mianpage')
 ]
