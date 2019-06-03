@@ -54,21 +54,35 @@ class VerificationHandler(APIView):
         webhook_token = request.data["token"]
         licence_number = request.data["license_id"]
         google_oauth2_url = "https://www.googleapis.com/oauth2/v3/userinfo?access_token="
+        google_oauth2_idToken_url = "https://oauth2.googleapis.com/tokeninfo?id_token="
+        if "custom_variables" in request.data["visitor"]:
+            using_ID_Token = next((item for item in request.data["visitor"]["custom_variables"] if item["key"] == "token"), False)
+        else:
+            using_ID_Token = False
         try:
-            if "token=" in request.data["visitor"]["page_current"]:
+            if using_ID_Token != False:
+                visitor_auth_token = using_ID_Token["value"]
+            elif "token=" in request.data["visitor"]["page_current"]:
                 visitor_auth_token = request.data["visitor"]["page_current"].split("token=")[1]
-            elif "token%3D" in request.data["visitor"]["page_current"]:
-                visitor_auth_token = request.data["visitor"]["page_current"].split("token%3D")[1]
+                
         except:
             livechat_visitor_details_url = "https://api.livechatinc.com/v2/visitors/%s/details"%visitor_id
             payload = {'license_id':licence_number,'token':webhook_token, 'id':'Status', 'fields[0][name]':'Verified COE User', 'fields[0][value]':'❌'}
             updated_details = requests.post(livechat_visitor_details_url, auth=HTTPBasicAuth(config('livechat_email'),config('livechat_api_key')), data=payload)
             return Response("User not verified", status=200)
-
-        response = requests.get(google_oauth2_url+visitor_auth_token)
+    
+        if using_ID_Token != False:
+            response = requests.get(google_oauth2_idToken_url+visitor_auth_token)
+        elif "token=" in request.data["visitor"]["page_current"]:
+            response = requests.get(google_oauth2_url+visitor_auth_token)
+        else:
+            livechat_visitor_details_url = "https://api.livechatinc.com/v2/visitors/%s/details"%visitor_id
+            payload = {'license_id':licence_number,'token':webhook_token, 'id':'Status', 'fields[0][name]':'Verified COE User', 'fields[0][value]':'❌'}
+            updated_details = requests.post(livechat_visitor_details_url, auth=HTTPBasicAuth(config('livechat_email'),config('livechat_api_key')), data=payload)
+            return Response("User not verified", status=200)
+            
         if response.status_code==200:
             responseJSON = json.loads(response.content.decode('utf8').replace("'", '"'))
-            oauth2_name = responseJSON['name']
             oauth2_email = responseJSON['email']
             try:
                 oauth2_domain = responseJSON['hd']
@@ -80,8 +94,8 @@ class VerificationHandler(APIView):
                 isCOEUser = False
                 
             livechat_visitor_details_url = "https://api.livechatinc.com/v2/visitors/%s/details"%visitor_id
-            if oauth2_name == visitor_name and oauth2_email == visitor_email and isCOEUser:
-                payload = {'license_id':licence_number,'token':webhook_token, 'id':'Status', 'fields[0][name]':'Name', 'fields[0][value]':oauth2_name, 'fields[1][name]':'Email', 'fields[1][value]':oauth2_email, 'fields[2][name]':'Verified COE User', 'fields[2][value]':'✅'}
+            if oauth2_email == visitor_email and isCOEUser:
+                payload = {'license_id':licence_number,'token':webhook_token, 'id':'Status', 'fields[0][name]':'Name', 'fields[0][value]':request.data["visitor"]["name"], 'fields[1][name]':'Email', 'fields[1][value]':oauth2_email, 'fields[2][name]':'Verified COE User', 'fields[2][value]':'✅'}
                 updated_details = requests.post(livechat_visitor_details_url, auth=HTTPBasicAuth(config('livechat_email'),config('livechat_api_key')), data=payload)
                 return Response("User verified", status=200)
             else:
